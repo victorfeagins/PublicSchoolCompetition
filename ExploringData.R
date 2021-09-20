@@ -41,4 +41,15 @@ mapview(TX.county) +
           zcol = "Charter.School..Public.School..2019.20",
           map.types = "OpenStreetMap")
 
+# In Bexar County
 
+Bexar <- TX.county %>% 
+  filter(NAME == "Bexar")
+
+st_crs(df.spatial) <- st_crs(Bexar)
+df.Bexar <- st_intersection(df.spatial,Bexar)
+
+mapview(Bexar) +
+  mapview(df.Bexar,
+          zcol = "Charter.School..Public.School..2019.20",
+          map.types = "OpenStreetMap")
