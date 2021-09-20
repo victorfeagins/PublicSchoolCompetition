@@ -12,8 +12,8 @@ filevector <- c("Data/Status1989_1986.csv", "Data/Status1999_1900.csv", "Data/St
 
 
 #Reading in csv's
-df<- lapply(filevector, read.csv, header = TRUE, skip = 6) %>%  #Read in all the csv's
-  lapply(filter, (!is.na(School.ID...NCES.Assigned..Public.School..Latest.available.year))) %>% # In each csv file remove observations that have no school ID
-  reduce(full_join) #Merge them all by common variable names
+df <- lapply(filevector, read.csv, header = TRUE, skip = 6) %>%  #Read in all the csv's
+  lapply(filter, row_number() <= n()-4) %>% # In each csv file remove footer of 4 rows
+  reduce(full_join)  #Merge them all by common variable names
 
 
