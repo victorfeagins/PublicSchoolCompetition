@@ -43,3 +43,8 @@ df.trans <- df.order %>%
 
 df.trans.nm <- df.trans %>% 
   filter(!is.na(value))
+
+#Groupby ID then find the min value of time might work
+#Find observations, that have few observations 
+#Group by and table amount of observations, can do histogram
+
