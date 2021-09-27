@@ -1,0 +1,64 @@
+---
+title: "Demography HW 2"
+author: "Victor Feagins"
+date: "9/27/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+## Packages
+```{r}
+library(spatialreg) #Spatial Auto regressive function
+library(spdep) # Constructing Neighbors 
+library(sf) # Manipulating spatial objects
+library(tidycensus) #Bringing in Data from Census
+library(dplyr) # Manipulating dataframes
+library(stringr) #Manipulating strings
+
+```
+
+## Data
+### Teacher Data
+```{r}
+df.r <- read.csv("Data/County_Student_Teacher.csv",
+                 header = TRUE, 
+                 skip = 6)
+```
+
+#### Processing
+Creating a subset of variables of interest
+```{r}
+df <- df.r %>% 
+  select(Full.Time.Equivalent..FTE..Teachers..Public.School..2019.20,
+         County.Number..Public.School..2019.20,
+         Total.Number.of.Public.Schools..Public.School..2019.20,
+         Total.Students.All.Grades..Excludes.AE...Public.School..2019.20) %>% 
+  rename(Teachers_19 = Full.Time.Equivalent..FTE..Teachers..Public.School..2019.20,
+         FIPS = County.Number..Public.School..2019.20,
+         PublicSchools_19  = Total.Number.of.Public.Schools..Public.School..2019.20,
+         Total_Students_19 = Total.Students.All.Grades..Excludes.AE...Public.School..2019.20)
+```
+
+Removing NAs
+
+```{r}
+df <- df %>% 
+  mutate(across(everything(), ~str_trim(str_replace(.,"â€", "NA")))) %>%  # Replace special characters with "NA"
+  na_if("NA") %>% #making "NA" into real NA
+  na.omit() #Removing NA
+```
+
+### Census Data
+```{r}
+df <-get_acs(geography = "county",
+                state="TX",
+                year = 2019,
+                variables=c(), 
+                geometry = T,
+                output = "wide")
+```
+
+
