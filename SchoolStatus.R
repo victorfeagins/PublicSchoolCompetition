@@ -5,7 +5,7 @@
 #Packages ----
 library(dplyr)#For dataframe manipulation
 library(tidyr) #For transposing data
-library(purrr) # For effective interation
+library(purrr) # For effective iteration
 library(stringr) #For handling of strings
 
 #Data Files requested from Common Core ----
