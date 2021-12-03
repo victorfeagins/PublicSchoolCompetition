@@ -79,7 +79,7 @@ sd(df.long.lat$sd.lat, na.rm = TRUE)
 sd(df.long.lat$sd.long, na.rm = TRUE)
 
 #There is some variation in in the long lat over the years but most are very small. 
-# I think it will be easier to see if the addresses change.
+# I think it will be easier to see if the addresses change
 #For know let's take the average lat and long as the lat long for the school
 #Taking note to explore this further.
 
@@ -89,7 +89,7 @@ df.long.lat <- df.long.lat %>%
          Lat.Avg = mean(as.numeric(c_across(starts_with("Latitude"))), na.rm = TRUE)) %>% 
   ungroup()
 
-df.long.lat.subset <- df.long.lat %>% 
+df.long.lat.less.var <- df.long.lat %>% 
   select(Agency.ID...NCES.Assigned..Public.School..Latest.available.year,
          School.ID...NCES.Assigned..Public.School..Latest.available.year, 
          Long.Avg, 
@@ -99,7 +99,7 @@ df.long.lat.subset <- df.long.lat %>%
 ### Merging Spatial information ----
 
 df.subset <- df.subset %>% 
-  left_join(df.long.lat.subset)
+  left_join(df.long.lat.less.var)
 
 
 sum(is.na(df.subset$Long.Avg))
@@ -110,13 +110,42 @@ sum(is.na(df.subset$Lat.Avg))
 #For these schools we will need to geocode from the physical addresses if common core has these.
 
 
+## Charter and Magnet School Status ----
+
+df.charter.magnet<- read_american_core("Data2/Charter_Magnet_2019_1998.csv")
+
+
+### Does Charter or Magnet Status change over the years? ----
+
+
+df.charter.magnet <- df.charter.magnet %>% 
+  rowwise() %>% 
+  mutate(Status_CharterChange = n_distinct(c_across(starts_with("Charter")), na.rm = TRUE), #2 distinct groups mean yes and no exists in the same row
+         Status_MagnetChange = n_distinct(c_across(starts_with("Magnet")), na.rm = TRUE)) %>% 
+  ungroup()
 
 
 
+table(df.charter.magnet$Status_CharterChange)
+table(df.charter.magnet$Status_MagnetChange)
+
+#Some schools became a charter school and some magnet schools became a magnet
 
 
+df.changes<- df.charter.magnet %>% 
+  filter(Status_CharterChange == 2 | Status_MagnetChange == 2)
 
 
+### Can a school be a Magnet school and a Charter School?
 
+df.charter.magnet <- df.charter.magnet %>% 
+  rowwise() %>% 
+  mutate(ListCharter = list(c_across(starts_with("Charter"))),
+         ListMagnet = list(c_across(starts_with("Magnet"))),
+         ListCM = list(paste(ListCharter,ListMagnet)), #Combines Charter and Magnet School Status together
+         CM.SameTime = sum(str_detect(ListCM, "1-Yes 1-Yes"))) %>% #Checks if Charter Yes and Magnet yes at same year
+  ungroup()
 
-  
+table(df.charter.magnet$CM.SameTime)
+
+#An extremely small amount of schools are a magnet school and charter school
