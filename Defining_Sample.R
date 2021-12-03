@@ -70,7 +70,8 @@ df.long.lat<- read_american_core("Data2/Long_Lat_2019_2000.csv")
 df.long.lat <- df.long.lat %>% 
   rowwise() %>% 
   mutate(sd.lat = sd(c_across(starts_with("Latitude")), na.rm = TRUE),
-         sd.long = sd(c_across(starts_with("Longitude")), na.rm = TRUE))
+         sd.long = sd(c_across(starts_with("Longitude")), na.rm = TRUE)) %>% 
+  ungroup()
 
 hist(log(df.long.lat$sd.long))
 hist(log(df.long.lat$sd.lat))
@@ -82,10 +83,31 @@ sd(df.long.lat$sd.long, na.rm = TRUE)
 #For know let's take the average lat and long as the lat long for the school
 #Taking note to explore this further.
 
+df.long.lat <- df.long.lat %>% 
+  rowwise() %>% 
+  mutate(Long.Avg = mean(as.numeric(c_across(starts_with("Longitude"))), na.rm = TRUE),
+         Lat.Avg = mean(as.numeric(c_across(starts_with("Latitude"))), na.rm = TRUE)) %>% 
+  ungroup()
+
+df.long.lat.subset <- df.long.lat %>% 
+  select(Agency.ID...NCES.Assigned..Public.School..Latest.available.year,
+         School.ID...NCES.Assigned..Public.School..Latest.available.year, 
+         Long.Avg, 
+         Lat.Avg)
 
 
+### Merging Spatial information ----
+
+df.subset <- df.subset %>% 
+  left_join(df.long.lat.subset)
 
 
+sum(is.na(df.subset$Long.Avg))
+
+sum(is.na(df.subset$Lat.Avg))
+
+#Some schools do not have lat and long. The collection of that data goes back only to 2000
+#For these schools we will need to geocode from the physical addresses if common core has these.
 
 
 
