@@ -29,7 +29,7 @@ hist(df$YearsActive) # Most schools have the all the years open
   
 table(df$YearsActive)
 
-#It might be possible to actually get the ranges of 
+
 
 
 
@@ -41,6 +41,10 @@ df <- df %>%
   mutate(FirstYear = min(as.numeric(YearsReported)),
          LastYear = max(as.numeric(YearsReported))) %>% 
   ungroup()
+
+#This gets the last and first year reported but hides situations when schools leave and reenter the dataset 
+#To explore this would require a bit more coding but is possible. By replacing "-" with ":" and " " with "," and 
+#Evaluating the sequence would be each year school is active.
 
 
 
