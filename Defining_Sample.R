@@ -17,13 +17,7 @@ read_american_core <- function(file)
 
 
 # Reading in Data ----
-df <- read.csv("Data2/Report_2019_1986.csv",  header = TRUE,
-               skip = 6) %>% 
-  head(-4)
-
-df <- df %>% 
-  mutate(across(everything(), ~ifelse(str_detect(.,pattern = "â€"), NA, .)))
-
+df  <-  read_american_core("Data2/Report_2019_1986.csv")
 
 # Finding Subset of Data by Years Active ----
 ## Calculating Years Active ----
@@ -66,7 +60,29 @@ df.subset <- df %>%
 
 # Adding other Variables to Dataset ----
 
-### Spatial Information ----
+## Spatial Information ----
+
+df.long.lat<- read_american_core("Data2/Long_Lat_2019_2000.csv")
+
+
+### Does long lat vary over the years?
+
+df.long.lat <- df.long.lat %>% 
+  rowwise() %>% 
+  mutate(sd.lat = sd(c_across(starts_with("Latitude")), na.rm = TRUE),
+         sd.long = sd(c_across(starts_with("Longitude")), na.rm = TRUE))
+
+hist(log(df.long.lat$sd.long))
+hist(log(df.long.lat$sd.lat))
+sd(df.long.lat$sd.lat, na.rm = TRUE)
+sd(df.long.lat$sd.long, na.rm = TRUE)
+
+#There is some variation in in the long lat over the years but most are very small. 
+# I think it will be easier to see if the addresses change.
+#For know let's take the average lat and long as the lat long for the school
+#Taking note to explore this further.
+
+
 
 
 
