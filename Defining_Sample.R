@@ -6,6 +6,14 @@ library(tidyr) #For transposing data
 library(purrr) # For effective iteration
 library(stringr) #For handling of strings
 
+read_american_core <- function(file)
+{
+  df <- read.csv(file,  header = TRUE,
+           skip = 6) %>% 
+    head(-4) %>% 
+    mutate(across(everything(), ~ifelse(str_detect(.,pattern = "â€"), NA, .)))
+  df
+}
 
 
 # Reading in Data ----
@@ -17,8 +25,8 @@ df <- df %>%
   mutate(across(everything(), ~ifelse(str_detect(.,pattern = "â€"), NA, .)))
 
 
-
-# Calculating Years Active ----
+# Finding Subset of Data by Years Active ----
+## Calculating Years Active ----
 
 df <- df %>% 
   rowwise() %>% 
@@ -33,7 +41,7 @@ table(df$YearsActive)
 
 
 
-# Finding the time frame the school is open or at least reported data -----
+## Finding the time frame the school is open or at least reported data -----
 
 df <- df %>% 
   mutate(YearsReported = str_split(Years.School.Reported.Data..Public.School..Latest.available.year, " |-")) %>% 
@@ -48,11 +56,23 @@ df <- df %>%
 
 
 
-# Filtering schools 10 years or greater ----
+## Filtering schools 10 years or greater ----
 #10 chosen out of simplicity
 
 df.subset <- df %>%
   filter(YearsActive >= 10)
+
+
+
+# Adding other Variables to Dataset ----
+
+### Spatial Information ----
+
+
+
+
+
+
 
 
 
