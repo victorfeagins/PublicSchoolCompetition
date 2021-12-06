@@ -136,16 +136,82 @@ df.changes<- df.charter.magnet %>%
   filter(Status_CharterChange == 2 | Status_MagnetChange == 2)
 
 
-### Can a school be a Magnet school and a Charter School?
+### Can a school be a Magnet school and a Charter School? ----
 
 df.charter.magnet <- df.charter.magnet %>% 
   rowwise() %>% 
   mutate(ListCharter = list(c_across(starts_with("Charter"))),
          ListMagnet = list(c_across(starts_with("Magnet"))),
          ListCM = list(paste(ListCharter,ListMagnet)), #Combines Charter and Magnet School Status together
-         CM.SameTime = sum(str_detect(ListCM, "1-Yes 1-Yes"))) %>% #Checks if Charter Yes and Magnet yes at same year
+         CM.SameTime = sum(str_detect(ListCM, "1-Yes 1-Yes"), na.rm = TRUE)) %>% #Checks if Charter Yes and Magnet yes at same year
   ungroup()
 
 table(df.charter.magnet$CM.SameTime)
 
-#An extremely small amount of schools are a magnet school and charter school
+#Extremely small amount of schools are a magnet school and charter school
+
+
+### Merging Charter School information
+
+df.charter.less.var <- df.charter.magnet %>% 
+  select(School.ID...NCES.Assigned..Public.School..Latest.available.year,
+         Agency.ID...NCES.Assigned..Public.School..Latest.available.year, starts_with("Charter"))
+
+
+df.subset <- df.subset %>% 
+  left_join(df.charter.less.var)
+
+
+## Student  Characteristics ----
+
+### Number of Free Lunch Students ----
+df.freelunch <- read_american_core("Data2/Free_Lunch_Eligible_2019_1987.csv")
+
+
+##### Merging Free Lunch Students ----
+
+df.subset <- df.subset %>% 
+  left_join(df.freelunch)
+
+
+
+### Total Number of Students ----
+
+df.totalstudents <- read_american_core("Data2/Total_Students_2019_1986.csv")
+
+##### Merging Total Students ----
+df.subset <- df.subset %>% 
+  left_join(df.totalstudents)
+
+
+#There is another variable which is the number of students reported for ethic background ideally these numbers are the same. 
+
+### Hispanic Black Students ----
+
+
+df.hispanic.black <- read_american_core("Data2/Hispanic_Black_2019_1987.csv")
+
+df.subset <- df.subset %>% 
+  left_join(df.hispanic.black)
+
+
+### White and Asian Students ----
+
+df.white.asian <- read_american_core("Data2/White_Asian_2019_1987.csv")
+
+df.subset <- df.subset %>% 
+  left_join(df.white.asian)
+
+
+#Creating Dataset for analysis 
+
+RenameVar <- function(title, string){
+  str_c(title, str_sub(string, -7)) #Combines the title and the last 7 characters (year)
+}
+
+df.final <- df.subset %>% 
+  rename_with(~RenameVar("Status", .x), starts_with("Start")) %>% 
+  select(sort(names(.))) #Sorts variables alphabetically
+
+
+
