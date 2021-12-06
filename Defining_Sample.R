@@ -261,12 +261,15 @@ df.final <- lapply(namevector, Transpose_TimeVary,  dataframe = df.wide) %>% #Fo
 df.save <- df.final %>% 
   filter(!is.na(School.Status)) %>%  # if missing then school did not exist in the dataset
   filter(School.Status != "2-Closed") %>% #if the school is closed then not interested
+  filter(School.Status != "6-Inactive") %>%  #if school does not have current students then not interested
+  filter(School.Status != "7-Future") %>% #if school does not have current students then not interested
   mutate(across(everything(), ~ifelse(. == "=0", 0, .)))
 
+#Future might be relevant when defining when charter school started effecting public schools.
+#Sensitivity needed here
 
-
-write.csv(df.save, "Data2/School_Panel.csv",
-          row.names = FALSE)
+# write.csv(df.save, "Data2/School_Panel.csv",
+#           row.names = FALSE)
 
 
 
