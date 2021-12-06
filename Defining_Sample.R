@@ -203,15 +203,71 @@ df.subset <- df.subset %>%
   left_join(df.white.asian)
 
 
-#Creating Dataset for analysis 
+# Creating Data Set for analysis ----
 
-RenameVar <- function(title, string){
-  str_c(title, str_sub(string, -7)) #Combines the title and the last 7 characters (year)
+RenameVar <- function(title, string)
+{
+  str_c(title,"_",str_sub(string, -7)) #Combines the title and the last 7 characters (year)
 }
 
-df.final <- df.subset %>% 
-  rename_with(~RenameVar("Status", .x), starts_with("Start")) %>% 
-  select(sort(names(.))) #Sorts variables alphabetically
+
+### Renaming variables to be easier to work with ----
+
+df.wide <- df.subset %>%
+  rename(State.Name = State.Name..Public.School..Latest.available.year,
+         School.ID = School.ID...NCES.Assigned..Public.School..Latest.available.year,
+         Agency.ID = Agency.ID...NCES.Assigned..Public.School..Latest.available.year,
+         Years.School.Reported.Data = Years.School.Reported.Data..Public.School..Latest.available.year) %>% 
+  rename_with(~RenameVar("School.Status", .x), starts_with("Start.of.Year.Status")) %>% 
+  rename_with(~RenameVar("Charter.School.Status", .x), starts_with("Charter.School")) %>% 
+  rename_with(~RenameVar("Free.Lunch.Students", .x), starts_with("Free.Lunch.Eligible")) %>% 
+  rename_with(~RenameVar("Total.Students", .x), starts_with("Total.Students.All.Grades")) %>% 
+  rename_with(~RenameVar("Hispanic.Students", .x), starts_with("Hispanic.Students")) %>%
+  rename_with(~RenameVar("Black.Students", .x), starts_with("Black.or.African")) %>% 
+  rename_with(~RenameVar("Asian.Students", .x), starts_with("Asian.or.Asian")) %>% 
+  rename_with(~RenameVar("White.Students", .x), starts_with("White.Students")) %>% 
+  select(-Years.School.Did.Not.Report.Data..Public.School..Latest.available.year,
+         -YearsReported) %>% 
+  relocate(School.Name, State.Name, School.ID, Agency.ID, Years.School.Reported.Data,
+           Years.School.Reported.Data, YearsActive, FirstYear, LastYear,
+           Long.Avg, Lat.Avg) #moving all time invariant variables to the front. Easier to transpose
+
+### Transposing data based on year ----
+Transpose_TimeVary <- function(dataframe, varname)
+{
+  dataframe %>% 
+    select(School.Name, State.Name, School.ID, Agency.ID, Years.School.Reported.Data,
+           Years.School.Reported.Data, YearsActive, FirstYear, LastYear,
+           Long.Avg, Lat.Avg, 
+           starts_with(varname)) %>% 
+    pivot_longer(cols = c(starts_with(varname)),
+                 names_to = "Year",
+                 values_to = varname) %>% 
+    mutate(Year = str_sub(Year, -7))
+}
+
+
+namevector <- names(df.wide)[-1:-12] %>%  #variables that time vary
+  str_extract(".*_") %>% #Everything before the _
+  str_sub(end = nchar(.)-1) %>%  # remove _
+  unique() #The unique variables
+
+df.final <- lapply(namevector, Transpose_TimeVary,  dataframe = df.wide) %>% #For each time varying variable transpose it
+  reduce(full_join) #Then merge them all together
+
+#Could possible do this all in one pivot longer but I couldn't figure out how to do so. Using name pattern and what not.
+
+### Cleaning up ----
+df.save <- df.final %>% 
+  filter(!is.na(School.Status)) %>%  # if missing then school did not exist in the dataset
+  filter(School.Status != "2-Closed") %>% #if the school is closed then not interested
+  mutate(across(everything(), ~ifelse(. == "=0", 0, .)))
+
+
+
+write.csv(df.save, "Data2/School_Panel.csv",
+          row.names = FALSE)
+
 
 
 
