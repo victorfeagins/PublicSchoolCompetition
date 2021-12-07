@@ -8,6 +8,9 @@ library(stringr)
 ## Spatial libraries ----
 library(sf)
 library(spdep)
+
+## Modeling
+library(car)
 library(spatialreg)
 
 
@@ -71,6 +74,7 @@ table(Local.Hispanic$Factor, Local.Hispanic$sig)
 
 
 # Modeling ----
+## Getting Data ready for Modeling ----
 df.model <- df %>% 
   mutate(across(.cols = ends_with("E", ignore.case = FALSE) & !c(TotalE,Median.Income.AvgE) , 
                 .names = "{.col}.Percent",
@@ -78,16 +82,43 @@ df.model <- df %>%
   select(Full.ID,
          YearsActive,
          Charter.School.Status,
-         ends_with("Students"),
+         ends_with("Percent"),
          Median.Income.AvgE,
-         ends_with("E.Percent", ignore.case = FALSE))
+         ends_with("E.Percent", ignore.case = FALSE),
+         Total.Students)
 
 df.model.scaled <- df.model %>% 
-  mutate(across(.cols = where(is.numeric), .fns = scale)) #Scales all the variables in Spark fashion
+  mutate(Charter.School.Status = as.factor(Charter.School.Status)) %>% 
+  mutate(across(.cols = where(is.numeric), .fns = scale)) %>%   #Scales all the variables in Spark fashion
+  na.omit() #Remove missing
+
+#New Spatial  neighborhood
+
+knn4.model <- knearneigh(df.model.scaled, k = 4) %>% 
+  knn2nb()
+
+knn4.model.wts<-nb2listw(neighbours = knn4.model, style = "W")
 
 
 
 
+## Logistics  Model ----
+model.formula = Charter.School.Status ~ YearsActive + Total.Students + Hispanic.Percent + Black.Percent + White.Percent + Free.Lunch.Percent + HispanicE.Percent + NH.WhiteE.Percent + NH.BlackE.Percent+ Median.Income.AvgE
+
+logisitc <- glm(model.formula, family = binomial, data = df.model.scaled)
+
+# Age and size of school matters and free lunch percent matters
+summary(logisitc)
+
+vif(logisitc)
+
+#We have problems with multicolinearity
+
+#Spatial Residuals
+df.model.scaled$residuals.log <- residuals(logisitc)
+
+moran.test(df.model.scaled$residuals.log, knn4.model.wts)
+# There is still spatial correlation to address.
 
 
 
