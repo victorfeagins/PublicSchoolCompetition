@@ -82,6 +82,11 @@ df.model <- df %>%
          Median.Income.AvgE,
          ends_with("E.Percent", ignore.case = FALSE))
 
+df.model.scaled <- df.model %>% 
+  mutate(across(.cols = where(is.numeric), .fns = scale)) #Scales all the variables in Spark fashion
+
+
+
 
 
 
