@@ -8,6 +8,7 @@ library(stringr)
 ## Spatial libraries ----
 library(sf)
 library(spdep)
+library(tigris)
 
 ## Modeling
 library(car)
@@ -169,7 +170,28 @@ df.model.scaled$Predicted_Y.Spatial <-log.bym.INLA$summary.fitted.values$mean
 Random.Summary <- log.bym.INLA$summary.random$Struct %>% 
   select(ID, mean)
 
-df.model.scaled %>%
+df.model.scaled <- df.model.scaled %>%
   left_join(Random.Summary, by = c("Struct" = "ID"))
 
+
+### Plotting Spatial Effects ----
+quantile_variable <- function(x, groups = 4){
+  cut(x, breaks=quantile(x, p=seq(0,1,length.out = groups + 1), na.rm=T ), include.lowest=T )
+}
+
+
+tx.boundery <- states(cb = TRUE, year = 2019)
+
+tx.boundery<- tx.boundery %>% 
+  filter(STUSPS == "TX") %>%
+  st_transform(crs = "EPSG:3081")
+
+
+df.model.scaled %>% 
+  ggplot()+
+  geom_sf(data = tx.boundery)+
+  geom_sf(mapping = aes(col = quantile_variable(mean))) +
+  scale_color_brewer(palette = "YlOrRd")
+
+#The high values of the random effect seem to be clustered in very high population areas. 
   
