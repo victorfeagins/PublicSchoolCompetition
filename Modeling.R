@@ -8,7 +8,7 @@ library(stringr)
 ## Spatial libraries ----
 library(sf)
 library(spdep)
-
+library(spatialreg)
 
 
 # Reading in Data -----
@@ -68,3 +68,21 @@ Local.Hispanic <- Local_Moran(df$Hispanic.Percent, knn4.wts)
 summary(Local.Hispanic)
 
 table(Local.Hispanic$Factor, Local.Hispanic$sig)
+
+
+# Modeling ----
+df.model <- df %>% 
+  mutate(across(.cols = ends_with("E", ignore.case = FALSE) & !c(TotalE,Median.Income.AvgE) , 
+                .names = "{.col}.Percent",
+                .fns = ~ .x/TotalE)) %>% 
+  select(Full.ID,
+         YearsActive,
+         Charter.School.Status,
+         ends_with("Students"),
+         Median.Income.AvgE,
+         ends_with("E.Percent", ignore.case = FALSE))
+
+
+
+
+
