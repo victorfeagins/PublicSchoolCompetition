@@ -10,7 +10,7 @@ library(stringr)
 library(sf)
 library(tidycensus)
 library(spdep)
-
+library(tigris)
 # Reading in Data ----
 df <- read.csv("Data2/School_Panel.csv")
 
@@ -53,6 +53,12 @@ median.income.tract <- get_acs(geography = "tract",
                                cache_table = T,
                                state = "TX")
 
+tx.boundery <- states(cb = TRUE, year = 2019)
+
+tx.boundery<- tx.boundery %>% 
+  filter(STUSPS == "TX") %>%
+  st_transform(crs = "EPSG:3081")
+  
 ### Cleaning Tract information ----
 
 race.table.tract <- race.table.tract %>% 
@@ -86,10 +92,47 @@ median.income.tract <- median.income.tract %>%
 ### Merging Tract Info ----
 
 tract.information <- race.table.tract %>% 
-  left_join(as.data.frame(median.income.tract))#since this not a spatial merge turn into a dataframe.
+  left_join(as.data.frame(median.income.tract)) %>% #since this not a spatial merge turn into a dataframe.
+  st_transform(crs = "EPSG:3081")
 
 
 # School Spatial Information ----
+
+### Turning School into Simple Feature ----
+df.2019 <- df.2019 %>% 
+  st_as_sf(coords = c("Long.Avg", "Lat.Avg"), crs = "WGS84") %>% #Will need to check the projection 
+  st_transform(crs = "EPSG:3081")
+
+
+
+### Plotting Spatial Properties----
+df.2019 %>%
+  ggplot()+
+  geom_sf(data=tx.boundery)+
+  geom_sf()
+
+#There are some points not in Texas, One point in the middle of gulf of Mexico.
+#The rest look pretty accurate.
+
+df.2019 %>% 
+  filter(!st_intersects(df.2019, tx.boundery, sparse = FALSE)) %>% 
+  ggplot()+
+  geom_sf(data=tx.boundery)+
+  geom_sf(mapping = aes(col = School.Name))
+  
+#Need to further Examine these schools. It is probably a typo when they inputted the lat and long.
+#Most of these schools seem to exist. For now I will put them aside.
+
+
+df.2019.TX <- df.2019 %>% 
+  filter(st_intersects(df.2019, tx.boundery, sparse = FALSE)) #Schools in Texas boundary
+
+
+
+# Merging Tract information with Schools ----
+
+df.2019.TX.Buffer <- df.2019.TX %>% 
+  st_buffer(8046.72) #5 miles in meters
 
 
 
