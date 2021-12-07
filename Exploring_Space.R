@@ -135,5 +135,27 @@ df.2019.TX.Buffer <- df.2019.TX %>%
   st_buffer(8046.72) #5 miles in meters
 
 
+df.2019.TX.Buffer %>% 
+  ggplot() +
+  geom_sf(data = tract.information)+
+  geom_sf()
+
+
+df.2019.TX.Merged <- df.2019.TX.Buffer %>% 
+  st_join(tract.information)
+
+
+## Calcuating
+School.Tract.Info <- df.2019.TX.Merged %>% 
+  as.data.frame() %>% #Removes space since it is sticky and it will slow things down
+  group_by(Full.ID) %>% 
+  select(Full.ID, ends_with("E", ignore.case = FALSE)) %>% 
+  select_if(is.numeric) %>% 
+  summarise(Median.Income.Avg = mean(Median.IncomeE, na.rm = TRUE),
+            across(.cols = ends_with("E", ignore.case = FALSE), .fns = sum)) %>% 
+  select(-Median.IncomeE)
+
+#Adds population numbers but averages median Income
+
 
 
