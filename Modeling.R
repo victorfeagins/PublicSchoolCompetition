@@ -11,7 +11,7 @@ library(spdep)
 
 ## Modeling
 library(car)
-library(spatialreg)
+library(INLA)
 
 
 # Reading in Data -----
@@ -88,9 +88,10 @@ df.model <- df %>%
          Total.Students)
 
 df.model.scaled <- df.model %>% 
-  mutate(Charter.School.Status = as.factor(Charter.School.Status)) %>% 
   mutate(across(.cols = where(is.numeric), .fns = scale)) %>%   #Scales all the variables in Spark fashion
-  na.omit() #Remove missing
+  na.omit() %>%  #Remove missing
+  mutate(Charter.School.Status = ifelse(Charter.School.Status == "1-Yes", 1, 0)) %>% 
+  mutate(Struct = 1:n())
 
 #New Spatial  neighborhood
 
@@ -120,5 +121,42 @@ df.model.scaled$residuals.log <- residuals(logisitc)
 moran.test(df.model.scaled$residuals.log, knn4.model.wts)
 # There is still spatial correlation to address.
 
+### INLA Logisitc Model ----
 
+log.INLA <- inla(formula = model.formula,
+                 data = df.model.scaled,
+                 family = "binomial",
+                 Ntrials = 1,
+                 control.compute = list(waic=T), 
+                 control.predictor = list(link=1), #estimate predicted values & their marginals or not?
+                 num.threads = 3, 
+                 verbose = F)
+summary(log.INLA)
+
+# We get same results as GLM
+
+### Spatial Random Effects
+#INLA Spatial neighborhood
+
+
+knn4.temp <- knearneigh(df.model.scaled, k = 4) %>% 
+  knn2nb(row.names = df.model.scaled$Struct, sym = T)
+
+nb2INLA("cl_graph",knn4.temp)
+
+H<-inla.read.graph(filename="cl_graph") #Spatial Relationship
+
+
+# Modeling Spatial Random Effects ----
+Log.Spatial.Effects.Formula = Charter.School.Status ~ YearsActive + Total.Students + Hispanic.Percent + Black.Percent + White.Percent + Free.Lunch.Percent + HispanicE.Percent + NH.WhiteE.Percent + NH.BlackE.Percent+ Median.Income.AvgE + f(Struct, model = "bym", scale.model = T, constr = T, graph = H)
+
+
+log.bym.INLA <- inla(formula = Log.Spatial.Effects.Formula,
+                 data = df.model.scaled,
+                 family = "binomial",
+                 Ntrials = 1,
+                 control.compute = list(waic=T), 
+                 control.predictor = list(link=1), #estimate predicted values & their marginals or not?
+                 num.threads = 5, 
+                 verbose = F)
 
