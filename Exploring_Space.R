@@ -145,17 +145,23 @@ df.2019.TX.Merged <- df.2019.TX.Buffer %>%
   st_join(tract.information)
 
 
-## Calcuating
+## Condensing Tract information ----
 School.Tract.Info <- df.2019.TX.Merged %>% 
   as.data.frame() %>% #Removes space since it is sticky and it will slow things down
   group_by(Full.ID) %>% 
   select(Full.ID, ends_with("E", ignore.case = FALSE)) %>% 
   select_if(is.numeric) %>% 
-  summarise(Median.Income.Avg = mean(Median.IncomeE, na.rm = TRUE),
+  summarise(Median.Income.AvgE = mean(Median.IncomeE, na.rm = TRUE),
             across(.cols = ends_with("E", ignore.case = FALSE), .fns = sum)) %>% 
   select(-Median.IncomeE)
 
 #Adds population numbers but averages median Income
 
 
+### Joining condensed Tract info to data ----
+df.2019.TX <- df.2019.TX %>% 
+  left_join(School.Tract.Info)
+
+
+saveRDS(df.2019.TX, "Data2/Data.For.Modeling.rds")
 
