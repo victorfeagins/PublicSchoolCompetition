@@ -29,7 +29,30 @@ df <- df %>%
 
 
 # Filtering Year out ----
-#Since we are exploring space in this script we will only look at one year for simplicty. 
+#Since we are exploring space in this script we will only look at one year for simplicity. 
 df.2019 <- df %>% 
   filter(Year == 2019) %>% 
   filter(Total.Students != 0)
+
+# Grabbing Spatial information ----
+
+
+race.table.tract <-  get_acs(geography = "tract",
+                         year=2019,
+                         geometry = T,
+                         output="wide",
+                         table = "B03002",
+                         cache_table = T,
+                         state = "TX")
+
+median.income.tract <- get_acs(geography = "tract",
+                               year=2019,
+                               geometry = T,
+                               output="wide",
+                               variables = "B06011_001E",
+                               cache_table = T,
+                               state = "TX")
+
+
+
+
