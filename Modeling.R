@@ -160,3 +160,16 @@ log.bym.INLA <- inla(formula = Log.Spatial.Effects.Formula,
                  num.threads = 5, 
                  verbose = F)
 
+summary(log.bym.INLA)
+
+#The Free. Lunch Percent is not significant is is probably due to the spatial information being correlated with economic status. 
+
+df.model.scaled$Predicted_Y.Spatial <-log.bym.INLA$summary.fitted.values$mean
+
+Random.Summary <- log.bym.INLA$summary.random$Struct %>% 
+  select(ID, mean)
+
+df.model.scaled %>%
+  left_join(Random.Summary, by = c("Struct" = "ID"))
+
+  
