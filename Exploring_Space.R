@@ -55,7 +55,7 @@ median.income.tract <- get_acs(geography = "tract",
 
 ### Cleaning Tract information ----
 
-race.table.tract %>% 
+race.table.tract <- race.table.tract %>% 
   rename_with(.fn = ~str_c("Total", str_sub(.x, start = -1)), .cols = starts_with("B03002_001")) %>% 
   rename_with(.fn =  ~str_c("Not.Hispanic", str_sub(.x, start = -1)), .cols = starts_with("B03002_002")) %>% 
   rename_with(.fn =  ~str_c("NH.White", str_sub(.x, start = -1)), .cols = starts_with("B03002_003")) %>% 
@@ -76,8 +76,21 @@ race.table.tract %>%
   rename_with(.fn =  ~str_c("H.Other", str_sub(.x, start = -1)), .cols = starts_with("B03002_018")) %>% 
   rename_with(.fn =  ~str_c("H.Two.or.More", str_sub(.x, start = -1)), .cols = starts_with("B03002_019")) %>%
   rename_with(.fn =  ~str_c("H.Two.Races.Other", str_sub(.x, start = -1)), .cols = starts_with("B03002_020")) %>% 
-  rename_with(.fn =  ~str_c("H.Two.Races.NOther", str_sub(.x, start = -1)), .cols = starts_with("B03002_013"))
+  rename_with(.fn =  ~str_c("H.Two.Races.NOther", str_sub(.x, start = -1)), .cols = starts_with("B03002_021"))
   
+# I really wanted to write a function to reduce that code but was struggling with how rename_with functions works.and getting a working codebook for ACS
+
+median.income.tract <- median.income.tract %>% 
+  rename_with(.fn =  ~str_c("Median.Income", str_sub(.x, start = -1)), .cols = starts_with("B06011_001"))
+
+### Merging Tract Info ----
+
+tract.information <- race.table.tract %>% 
+  left_join(as.data.frame(median.income.tract))#since this not a spatial merge turn into a dataframe.
+
+
+# School Spatial Information ----
+
 
 
 
