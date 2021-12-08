@@ -12,7 +12,14 @@ library(tigris)
 ## Modeling
 library(car)
 library(MASS)
+library(spatialreg)
 
+
+tx.boundery <- states(cb = TRUE, year = 2019)
+
+tx.boundery<- tx.boundery %>% 
+  filter(STUSPS == "TX") %>%
+  st_transform(crs = "EPSG:3081")
 
 
 df <- readRDS("Data2/Data.For.Modeling.rds")
@@ -24,6 +31,29 @@ df.model <- df %>%
   mutate(Charter.School.Status = ifelse(Charter.School.Status == "1-Yes", 1, 0))
 
 
+
+#Statistics ----
+
+table(df.model$Charter.School.Status)
+
+
+### Plotting ----
+df.model %>%
+  ggplot()+
+  geom_sf(data=tx.boundery)+
+  geom_sf(mapping = aes(col = as.factor(Charter.School.Status))) +
+  labs(title = "Charter School Locations in Texas",
+       col = "Charter School Status")
+
+# I don't know how to understand these plots.
+ggplot(df.model) +
+  geom_density(aes(x = Hispanic.Percent, fill = as.factor(Charter.School.Status)), alpha=0.6)
+
+ggplot(df.model) +
+  geom_density(aes(x = White.Percent, fill = as.factor(Charter.School.Status)), alpha=0.6)
+
+ggplot(df.model) +
+  geom_density(aes(x = Black.Percent, fill = as.factor(Charter.School.Status)), alpha=0.6)
 
 #Modeling ----
 
@@ -41,7 +71,7 @@ sqrt(Hispanic.model.poisson$deviance/Hispanic.model.poisson$df.residual) #Poisso
 
 
 
-# Negative Binomial 
+# Negative Binomial ----
 Hispanic.model.nb <- glm.nb(formula = Hispanic.formula, 
                       data = df.model)
 
@@ -54,9 +84,12 @@ Hispanic.formula.charter.school <- Hispanic.Students ~  HispanicE.Percent*Charte
 Hispanic.model.nb.c <- glm.nb(formula = Hispanic.formula.charter.school, 
                             data = df.model)
 
-summary(Hispanic.model.nb.c)
+summary(Hispanic.model.nb.c) #AIC goes down
 
-#Charter School interaction seems to influence how Hispanic tract information effects the enrollment and negativelly
+#Charter School interaction seems to influence how Hispanic tract information effects the enrollment looks negative
+
+
+
 
 
 
