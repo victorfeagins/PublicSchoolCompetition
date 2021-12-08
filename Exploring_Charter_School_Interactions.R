@@ -89,9 +89,46 @@ summary(Hispanic.model.nb.c) #AIC goes down
 #Charter School interaction seems to influence how Hispanic tract information effects the enrollment looks negative
 
 
+#Creating Auto covariate Variables -----
+
+knn4 <- knearneigh(df.model, k = 4) %>% 
+  knn2nb()
+
+knn4.wts<-nb2listw(neighbours = knn4, style = "W")
+
+
+df.model <- df.model %>% 
+  mutate(Lag.Hispanic.Rate = lag.listw(x = knn4.wts, var = (Hispanic.Students/Total.Students)),
+         Lag.Black.Rate = lag.listw(x = knn4.wts, var = (Black.Students/Total.Students)))
 
 
 
+#Hispanic Students ----
+Hispanic.formula.charter.school.auto <- Hispanic.Students ~  HispanicE.Percent*Charter.School.Status + YearsActive + Median.Income.AvgE + offset(log(Total.Students)) + Charter.School.Status + Lag.Hispanic.Rate
 
+Hispanic.model.nb.c.auto <- glm.nb(formula = Hispanic.formula.charter.school.auto, 
+                              data = df.model)
+
+summary(Hispanic.model.nb.c.auto)
+
+
+
+# Black Students ----
+
+Black.formula.charter.school <- Black.Students ~  NH.BlackE.Percent*Charter.School.Status + YearsActive + Median.Income.AvgE + offset(log(Total.Students)) + Charter.School.Status
+
+Black.model.nb.c <- glm.nb(formula = Black.formula.charter.school, 
+                                   data = df.model)
+
+summary(Black.model.nb.c)
+
+
+
+Black.formula.charter.school.auto <- Black.Students ~  NH.BlackE.Percent*Charter.School.Status + YearsActive + Median.Income.AvgE + offset(log(Total.Students)) + Charter.School.Status + Lag.Black.Rate
+
+Black.model.nb.c.auto <- glm.nb(formula = Black.formula.charter.school.auto, 
+                           data = df.model)
+
+summary(Black.model.nb.c.auto)
 
 
