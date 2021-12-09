@@ -45,16 +45,6 @@ df.model %>%
   labs(title = "Charter School Locations in Texas",
        col = "Charter School Status")
 
-# I don't know how to understand these plots.
-ggplot(df.model) +
-  geom_density(aes(x = Hispanic.Percent, fill = as.factor(Charter.School.Status)), alpha=0.6)
-
-ggplot(df.model) +
-  geom_density(aes(x = White.Percent, fill = as.factor(Charter.School.Status)), alpha=0.6)
-
-ggplot(df.model) +
-  geom_density(aes(x = Black.Percent, fill = as.factor(Charter.School.Status)), alpha=0.6)
-
 #Modeling ----
 
 
