@@ -1,4 +1,4 @@
-#The script is defining the sample of our analysis
+#The script is processing and creating the panel dataset from the education school data.
 
 # Packages ----
 library(dplyr)#For dataframe manipulation
