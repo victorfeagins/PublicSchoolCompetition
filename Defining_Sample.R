@@ -53,9 +53,9 @@ df <- df %>%
 ## Filtering schools 10 years or greater ----
 #10 chosen out of simplicity
 
-df.subset <- df %>%
-  filter(YearsActive >= 10)
-
+# df.subset <- df %>% #Let's not do any filtering right now.
+#   filter(YearsActive >= 10)
+df.subset <-  df
 
 
 # Adding other Variables to Dataset ----
